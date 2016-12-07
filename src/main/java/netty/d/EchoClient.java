@@ -1,6 +1,6 @@
 package netty.d;
 
-import io.netty.bootstrap.ServerBootstrap;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -9,43 +9,38 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 
 /**
- * @author litianwei 2016年11月30日
+ * @author litianwei 2016年12月07日
  */
-public class EchoServer {
+public class EchoClient {
 
-    public void bind(int port) throws InterruptedException {
-        // 配置服务端的NIO线程组
-        EventLoopGroup bossGroup = new NioEventLoopGroup();
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+    public void connect(int port) throws InterruptedException {
+        EventLoopGroup group = new NioEventLoopGroup();
 
         try {
-            ServerBootstrap b = new ServerBootstrap();
-            b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).option(ChannelOption.SO_BACKLOG, 100)
-                    .handler(new LoggingHandler(LogLevel.INFO)).childHandler(new ChannelInitializer<SocketChannel>() {
+            Bootstrap b = new Bootstrap();
+            b.group(group).channel(NioSocketChannel.class).option(ChannelOption.TCP_NODELAY, true)
+                    .handler(new ChannelInitializer<SocketChannel>() {
+
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ByteBuf delimiter = Unpooled.copiedBuffer("$_".getBytes());
                             ch.pipeline().addLast(new DelimiterBasedFrameDecoder(1024, delimiter));
                             ch.pipeline().addLast(new StringDecoder());
-                            ch.pipeline().addLast(new EchoServerHandler());
+                            ch.pipeline().addLast(new EchoClientHandler());
                         }
                     });
 
-            // 绑定端口，同步等待成功
-            ChannelFuture future = b.bind(port).sync();
+            ChannelFuture f = b.connect("127.0.0.1", port).sync();
 
-            // 等待服务器端监听端口关闭
-            future.channel().closeFuture().sync();
+            f.channel().closeFuture().sync();
+
         } finally {
-            bossGroup.shutdownGracefully();
-            workerGroup.shutdownGracefully();
+            group.shutdownGracefully();
         }
     }
 
@@ -58,7 +53,8 @@ public class EchoServer {
                 //采用默认值
             }
         }
-        new EchoServer().bind(port);
+
+        new EchoClient().connect(port);
     }
 
 }
