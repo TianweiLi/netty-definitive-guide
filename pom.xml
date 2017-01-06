@@ -21,12 +21,12 @@
             <artifactId>msgpack</artifactId>
             <version>0.6.12</version>
         </dependency>
-    </dependencies>
 
-    <dependency>
-        <groupId>com.google.protobuf</groupId>
-        <artifactId>protobuf-java</artifactId>
-        <version>3.1.0</version>
-    </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+    </dependencies>
 
 </project>
